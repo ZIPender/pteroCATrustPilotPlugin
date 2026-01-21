@@ -1,0 +1,23 @@
+{
+  "name": "trustpilot-review-plugin",
+  "version": "1.0.0",
+  "description": "PteroCA Panel plugin for Trustpilot review popups",
+  "main": "resources/js/index.js",
+  "scripts": {
+    "build": "echo 'Build not configured yet. Use your panel build system.'",
+    "dev": "echo 'Dev mode not configured yet. Use your panel build system.'"
+  },
+  "keywords": [
+    "pteroca",
+    "trustpilot",
+    "plugin",
+    "review"
+  ],
+  "author": "PteroCA Community",
+  "license": "MIT",
+  "peerDependencies": {
+    "react": "^17.0.0 || ^18.0.0",
+    "react-dom": "^17.0.0 || ^18.0.0",
+    "axios": "^0.21.0 || ^1.0.0"
+  }
+}

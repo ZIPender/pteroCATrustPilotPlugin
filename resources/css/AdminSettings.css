@@ -1,0 +1,210 @@
+/* Trustpilot Admin Settings Styles */
+
+.trustpilot-admin-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+.trustpilot-admin-header {
+    margin-bottom: 32px;
+}
+
+.trustpilot-admin-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0 0 8px 0;
+}
+
+.trustpilot-admin-header p {
+    font-size: 1rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+.trustpilot-admin-loading {
+    text-align: center;
+    padding: 48px;
+    font-size: 1.25rem;
+    color: #6b7280;
+}
+
+.trustpilot-admin-message {
+    padding: 16px;
+    border-radius: 6px;
+    margin-bottom: 24px;
+    font-weight: 500;
+}
+
+.trustpilot-admin-message-success {
+    background-color: #d1fae5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+}
+
+.trustpilot-admin-message-error {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.trustpilot-admin-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.trustpilot-stat-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.trustpilot-stat-label {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.trustpilot-stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.trustpilot-admin-form {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.trustpilot-form-section {
+    padding: 24px;
+}
+
+.trustpilot-form-section h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 24px 0;
+}
+
+.trustpilot-form-group {
+    margin-bottom: 24px;
+}
+
+.trustpilot-form-group label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.trustpilot-form-group input[type="text"],
+.trustpilot-form-group input[type="url"],
+.trustpilot-form-group input[type="number"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+}
+
+.trustpilot-form-group input:focus {
+    outline: none;
+    border-color: #00b67a;
+    box-shadow: 0 0 0 3px rgba(0, 182, 122, 0.1);
+}
+
+.trustpilot-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+}
+
+.trustpilot-checkbox-label:hover {
+    background-color: #f9fafb;
+}
+
+.trustpilot-checkbox-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.trustpilot-checkbox-label span {
+    font-weight: 500;
+    color: #374151;
+}
+
+.trustpilot-field-description {
+    margin: 8px 0 0 0;
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.trustpilot-form-actions {
+    padding: 16px 24px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.trustpilot-btn-save {
+    padding: 12px 24px;
+    background-color: #00b67a;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.trustpilot-btn-save:hover:not(:disabled) {
+    background-color: #00a56a;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 182, 122, 0.3);
+}
+
+.trustpilot-btn-save:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .trustpilot-admin-container {
+        padding: 16px;
+    }
+
+    .trustpilot-admin-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .trustpilot-admin-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .trustpilot-form-section {
+        padding: 16px;
+    }
+
+    .trustpilot-form-actions {
+        padding: 12px 16px;
+    }
+}
