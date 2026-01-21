@@ -1,0 +1,30 @@
+{
+    "name": "pteroca/trustpilot-review-plugin",
+    "description": "PteroCA Panel plugin for Trustpilot review popups",
+    "type": "library",
+    "keywords": ["pteroca", "trustpilot", "plugin", "review"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "PteroCA Community",
+            "email": "community@pteroca.com"
+        }
+    ],
+    "require": {
+        "php": "^7.4|^8.0",
+        "illuminate/support": "^8.0|^9.0|^10.0",
+        "illuminate/database": "^8.0|^9.0|^10.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Plugins\\TrustpilotReview\\": ""
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Plugins\\TrustpilotReview\\TrustpilotPlugin"
+            ]
+        }
+    }
+}

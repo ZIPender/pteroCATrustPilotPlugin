@@ -1,0 +1,21 @@
+{
+  "name": "TrustpilotReview",
+  "version": "1.0.0",
+  "description": "Prompts users to leave a Trustpilot review when their server is expiring soon",
+  "author": "PteroCA Community",
+  "pteroca_version": "0.6",
+  "main": "TrustpilotPlugin.php",
+  "hooks": [
+    "dashboard.loaded",
+    "server.view"
+  ],
+  "routes": {
+    "api": "routes/api.php",
+    "web": "routes/web.php"
+  },
+  "migrations": "database/migrations",
+  "assets": {
+    "js": "resources/js",
+    "css": "resources/css"
+  }
+}

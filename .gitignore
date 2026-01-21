@@ -1,0 +1,44 @@
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+dist/
+build/
+*.min.js
+*.min.css
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+/tmp/
+
+# Logs
+*.log
+
+# Environment
+.env.local
+.env.*.local
+
+# PHP
+vendor/
+composer.lock
+
+# Cache
+.cache/
+
+# Demo files (not part of plugin)
+demo.html
