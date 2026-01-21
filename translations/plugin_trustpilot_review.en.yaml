@@ -1,0 +1,33 @@
+# Trustpilot Review Plugin - English translations
+plugin_trustpilot_review:
+    name: "Trustpilot Review"
+    description: "Prompts users to leave a Trustpilot review when their server is expiring soon"
+    
+    widget:
+        title: "Enjoying our service?"
+        message: "Your server is expiring soon. If you've enjoyed our service, we'd love to hear your feedback on Trustpilot!"
+        expiring_in: "Server expiring within %days% days"
+        leave_review: "Leave a Review"
+        no_thanks: "No thanks"
+    
+    settings:
+        enabled: "Enable Plugin"
+        enabled_help: "Enable or disable the Trustpilot review plugin globally"
+        days_before_expiry: "Days Before Expiry"
+        days_before_expiry_help: "Number of days before server expiry to show the review popup"
+        review_url: "Trustpilot Review URL"
+        review_url_help: "The URL where users will be redirected to leave a review"
+        enable_widget: "Enable Dashboard Widget"
+        enable_widget_help: "Show the Trustpilot review widget on the user dashboard"
+        popup_title: "Popup Title"
+        popup_title_help: "Title displayed on the review popup"
+        popup_message: "Popup Message"
+        popup_message_help: "Message displayed on the review popup"
+    
+    stats:
+        total_dismissals: "Total Dismissals"
+        unique_users: "Unique Users"
+    
+    messages:
+        dismissed: "Review popup dismissed"
+        settings_saved: "Settings saved successfully"

@@ -1,21 +1,74 @@
 {
-  "name": "TrustpilotReview",
-  "version": "1.0.0",
-  "description": "Prompts users to leave a Trustpilot review when their server is expiring soon",
-  "author": "PteroCA Community",
-  "pteroca_version": "0.6",
-  "main": "TrustpilotPlugin.php",
-  "hooks": [
-    "dashboard.loaded",
-    "server.view"
-  ],
-  "routes": {
-    "api": "routes/api.php",
-    "web": "routes/web.php"
-  },
-  "migrations": "database/migrations",
-  "assets": {
-    "js": "resources/js",
-    "css": "resources/css"
-  }
+    "name": "trustpilot-review",
+    "display_name": "Trustpilot Review Plugin",
+    "version": "1.0.0",
+    "author": "PteroCA Community",
+    "description": "Prompts users to leave a Trustpilot review when their server is expiring soon. Shows a popup widget on the dashboard when servers are within X days of expiration.",
+    "license": "MIT",
+    "pteroca": {
+        "min": "0.6.0",
+        "max": "1.0.0"
+    },
+    "capabilities": [
+        "entities",
+        "migrations",
+        "ui",
+        "eda"
+    ],
+    "requires": {},
+    "bootstrap_class": "Plugins\\TrustpilotReview\\Bootstrap",
+    "config_schema": {
+        "enabled": {
+            "type": "boolean",
+            "default": true,
+            "hierarchy": "general",
+            "required": false,
+            "label": "Enable Plugin",
+            "help": "Enable or disable the Trustpilot review plugin globally"
+        },
+        "days_before_expiry": {
+            "type": "integer",
+            "default": 7,
+            "hierarchy": "general",
+            "required": false,
+            "label": "Days Before Expiry",
+            "help": "Number of days before server expiry to show the review popup"
+        },
+        "review_url": {
+            "type": "string",
+            "default": "https://www.trustpilot.com/evaluate/your-business",
+            "hierarchy": "general",
+            "required": true,
+            "label": "Trustpilot Review URL",
+            "help": "The URL where users will be redirected to leave a review"
+        },
+        "enable_widget": {
+            "type": "boolean",
+            "default": true,
+            "hierarchy": "general",
+            "required": false,
+            "label": "Enable Dashboard Widget",
+            "help": "Show the Trustpilot review widget on the user dashboard"
+        },
+        "popup_title": {
+            "type": "string",
+            "default": "Enjoying our service?",
+            "hierarchy": "general",
+            "required": false,
+            "label": "Popup Title",
+            "help": "Title displayed on the review popup"
+        },
+        "popup_message": {
+            "type": "string",
+            "default": "Your server is expiring soon. If you've enjoyed our service, we'd love to hear your feedback on Trustpilot!",
+            "hierarchy": "general",
+            "required": false,
+            "label": "Popup Message",
+            "help": "Message displayed on the review popup"
+        }
+    },
+    "assets": {
+        "css": ["css/trustpilot.css"],
+        "js": ["js/trustpilot.js"]
+    }
 }

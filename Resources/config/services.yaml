@@ -1,0 +1,27 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    # Widgets - must be tagged
+    Plugins\TrustpilotReview\Widget\TrustpilotWidget:
+        tags: ['widget']
+
+    # Repositories
+    Plugins\TrustpilotReview\Entity\Repository\DismissalRepository:
+        arguments: ['@doctrine']
+        tags: ['doctrine.repository_service']
+        public: true
+
+    # Services
+    Plugins\TrustpilotReview\Service\TrustpilotService:
+        public: true
+
+    # Event Subscribers are auto-discovered by PluginEventSubscriberRegistry
+    # DO NOT add kernel.event_subscriber tags
+    Plugins\TrustpilotReview\EventSubscriber\ServerEventSubscriber:
+        public: true
+
+    # Bootstrap
+    Plugins\TrustpilotReview\Bootstrap:
+        public: true
