@@ -9,7 +9,71 @@
 
 ## Step-by-Step Installation
 
-### 1. Download the Plugin
+### Method 1: Upload via Panel (Recommended)
+
+PteroCA supports installing plugins via ZIP file upload in the admin panel. This is the easiest and recommended method.
+
+#### Step 1: Create the ZIP File
+
+**Option A: Download from GitHub Releases**
+1. Go to the [Releases](https://github.com/ZIPender/pteroCATrustPilotPlugin/releases) page
+2. Download the latest release ZIP file (e.g., `TrustpilotReview-v1.0.0.zip` or similar)
+3. Skip to Step 2 below
+
+**Option B: Create ZIP from Repository (Linux/macOS)**
+```bash
+# Clone the repository
+git clone https://github.com/ZIPender/pteroCATrustPilotPlugin.git
+
+# Navigate into the directory
+cd pteroCATrustPilotPlugin
+
+# Create the ZIP file (excluding .git and unnecessary files)
+zip -r TrustpilotReview.zip . -x "*.git*" -x "node_modules/*" -x "vendor/*" -x "*.log" -x ".DS_Store" -x "*.swp" -x "*.tmp" -x ".env*"
+```
+
+**Option C: Create ZIP from Repository (Windows PowerShell)**
+```powershell
+# Clone the repository
+git clone https://github.com/ZIPender/pteroCATrustPilotPlugin.git
+
+# Navigate into the directory
+cd pteroCATrustPilotPlugin
+
+# Remove .git folder before zipping (required to reduce size)
+Remove-Item -Recurse -Force .git -ErrorAction SilentlyContinue
+
+# Create the ZIP file
+Compress-Archive -Path * -DestinationPath TrustpilotReview.zip -Force
+```
+
+#### Step 2: Upload to PteroCA
+
+1. Log in to your PteroCA admin panel
+2. Navigate to **Settings → Plugins**
+3. Click the **"Upload Plugin"** button
+4. Select the `TrustpilotReview.zip` file you created or downloaded
+5. Wait for the upload and installation to complete
+6. The plugin will appear in your plugins list
+
+#### Step 3: Enable the Plugin
+
+1. In the plugins list, find "TrustpilotReview"
+2. Click the enable/activate toggle or button
+3. The plugin is now active
+
+#### Step 4: Configure the Plugin
+
+1. Click on the plugin settings/configure option
+2. Set your Trustpilot review URL
+3. Configure the days before expiry threshold
+4. Save your settings
+
+### Method 2: Manual Installation
+
+If you prefer manual installation or need more control:
+
+#### 1. Download the Plugin
 
 **Option A: Git Clone**
 ```bash
@@ -21,7 +85,7 @@ git clone https://github.com/ZIPender/pteroCATrustPilotPlugin.git TrustpilotRevi
 1. Download the latest release from GitHub
 2. Extract to `plugins/TrustpilotReview` directory
 
-### 2. Register Service Provider
+#### 2. Register Service Provider
 
 Edit `config/app.php` and add the plugin to the providers array:
 
@@ -36,7 +100,7 @@ Edit `config/app.php` and add the plugin to the providers array:
 ],
 ```
 
-### 3. Run Database Migrations
+#### 3. Run Database Migrations
 
 Create the required database tables:
 
@@ -52,7 +116,7 @@ Migrating: 2024_01_01_000002_create_trustpilot_settings_table
 Migrated:  2024_01_01_000002_create_trustpilot_settings_table
 ```
 
-### 4. Publish Plugin Assets
+#### 4. Publish Plugin Assets
 
 Publish CSS and JavaScript files:
 
@@ -66,7 +130,7 @@ Publish configuration file:
 php artisan vendor:publish --tag=trustpilot-config
 ```
 
-### 5. Configure Environment
+#### 5. Configure Environment
 
 Add these lines to your `.env` file:
 
@@ -80,7 +144,7 @@ TRUSTPILOT_API_KEY=
 
 **Important**: Replace `your-business-name` with your actual Trustpilot business URL slug.
 
-### 6. Get Your Trustpilot Review URL
+#### 6. Get Your Trustpilot Review URL
 
 1. Go to https://www.trustpilot.com/
 2. Log in to your business account
@@ -92,7 +156,7 @@ Example URLs:
 - `https://www.trustpilot.com/evaluate/yourdomain.com`
 - `https://www.trustpilot.com/evaluate/your-business-name`
 
-### 7. Clear Cache
+#### 7. Clear Cache
 
 Clear all caches to load the new plugin:
 
@@ -103,7 +167,7 @@ php artisan view:clear
 php artisan route:clear
 ```
 
-### 8. Verify Installation
+#### 8. Verify Installation
 
 Check that the plugin is loaded:
 
@@ -121,7 +185,7 @@ GET|HEAD  api/admin/trustpilot/stats
 GET|HEAD  admin/trustpilot
 ```
 
-### 9. Access Admin Panel
+#### 9. Access Admin Panel
 
 1. Log in to your PteroCA Panel as an administrator
 2. Navigate to `/admin/trustpilot`
