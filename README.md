@@ -20,6 +20,8 @@ A plugin for PteroCA Panel (v0.6+) that prompts users to leave a Trustpilot revi
 
 ## Installation
 
+> **⚠️ IMPORTANT**: The plugin folder MUST be named `trustpilot-review` when placed in the PteroCA plugins directory. This is required for PteroCA to properly recognize and load the plugin.
+
 ### Method 1: Upload via Panel (Recommended)
 
 PteroCA supports installing plugins via ZIP file upload in the admin panel.
@@ -28,26 +30,26 @@ PteroCA supports installing plugins via ZIP file upload in the admin panel.
 
 **Option A: Download from GitHub Releases**
 1. Go to the [Releases](https://github.com/ZIPender/pteroCATrustPilotPlugin/releases) page
-2. Download the latest `.zip` file
+2. Download the latest `trustpilot-review.zip` file
 
 **Option B: Create ZIP from Repository**
 
 ```bash
 # Clone the repository
-git clone https://github.com/ZIPender/pteroCATrustPilotPlugin.git
+git clone https://github.com/ZIPender/pteroCATrustPilotPlugin.git trustpilot-review
 
 # Navigate into the directory
-cd pteroCATrustPilotPlugin
+cd trustpilot-review
 
 # Create the ZIP file (excluding .git and unnecessary files)
-zip -r TrustpilotReview.zip . -x "*.git*" -x "node_modules/*" -x "vendor/*" -x "*.log" -x ".DS_Store"
+zip -r trustpilot-review.zip . -x "*.git*" -x "node_modules/*" -x "vendor/*" -x "*.log" -x ".DS_Store"
 ```
 
 #### Uploading to PteroCA
 
 1. Navigate to **Settings → Plugins** in the PteroCA admin panel
 2. Click the **"Upload Plugin"** button
-3. Select the `TrustpilotReview.zip` file
+3. Select the `trustpilot-review.zip` file
 4. The plugin will be automatically installed
 5. Enable the plugin in the plugins list
 6. Configure plugin settings (see [Configuration](#configuration) below)
@@ -55,8 +57,11 @@ zip -r TrustpilotReview.zip . -x "*.git*" -x "node_modules/*" -x "vendor/*" -x "
 ### Method 2: Manual Installation
 
 ```bash
-# Clone directly into plugins directory
+# Clone directly into plugins directory with the correct folder name
 git clone https://github.com/ZIPender/pteroCATrustPilotPlugin.git /path/to/pteroca/plugins/trustpilot-review
+
+# Navigate to your PteroCA installation
+cd /path/to/pteroca
 
 # Scan for new plugins
 php bin/console plugin:scan
@@ -64,6 +69,14 @@ php bin/console plugin:scan
 # Enable the plugin
 php bin/console plugin:enable trustpilot-review
 ```
+
+### Method 3: Copy Files Manually
+
+1. Download or clone this repository
+2. **Rename the folder** to `trustpilot-review` (this is critical!)
+3. Copy the `trustpilot-review` folder to your PteroCA `plugins/` directory
+4. Run `php bin/console plugin:scan` from your PteroCA root
+5. Enable the plugin via admin panel or `php bin/console plugin:enable trustpilot-review`
 
 ## Configuration
 
@@ -162,11 +175,25 @@ cd pteroCATrustPilotPlugin
 
 ## Troubleshooting
 
-### Plugin Not Showing in Admin
+### Plugin Not Showing in Admin / Plugin Not Recognized
 
+**Most Common Issue: Incorrect Folder Name**
+
+The plugin folder **MUST** be named exactly `trustpilot-review` (matching the `name` field in `plugin.json`).
+
+```bash
+# Verify the folder is named correctly
+ls -la /path/to/pteroca/plugins/
+
+# The folder should be listed as 'trustpilot-review', NOT 'pteroCATrustPilotPlugin'
+# If incorrect, rename it:
+mv /path/to/pteroca/plugins/pteroCATrustPilotPlugin /path/to/pteroca/plugins/trustpilot-review
+```
+
+**Other checks:**
 - Ensure plugin is placed in the correct `plugins/` directory
 - Run `php bin/console plugin:scan` to discover new plugins
-- Check PteroCA logs for any plugin loading errors
+- Check PteroCA logs for any plugin loading errors: `tail -f var/log/pteroca.log`
 
 ### Widget Not Appearing
 

@@ -15,7 +15,6 @@
         "ui",
         "eda"
     ],
-    "requires": {},
     "bootstrap_class": "Plugins\\TrustpilotReview\\Bootstrap",
     "config_schema": {
         "enabled": {
