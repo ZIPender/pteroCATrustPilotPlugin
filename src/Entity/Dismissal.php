@@ -4,6 +4,7 @@ namespace Plugins\TrustpilotReview\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Plugins\TrustpilotReview\Entity\Repository\DismissalRepository;
 
 /**
  * Dismissal entity for tracking when users dismiss the Trustpilot review popup.
@@ -13,7 +14,7 @@ use Doctrine\ORM\Mapping as ORM;
  *
  * Table naming convention: plg_{shortname}_{table}
  */
-#[ORM\Entity(repositoryClass: 'Plugins\TrustpilotReview\Entity\Repository\DismissalRepository')]
+#[ORM\Entity(repositoryClass: DismissalRepository::class)]
 #[ORM\Table(name: 'plg_trustpilot_dismissal')]
 #[ORM\Index(columns: ['user_id', 'server_id'], name: 'idx_trustpilot_user_server')]
 #[ORM\UniqueConstraint(name: 'unique_user_server', columns: ['user_id', 'server_id'])]

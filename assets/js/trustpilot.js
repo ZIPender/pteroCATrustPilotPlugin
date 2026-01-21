@@ -7,6 +7,9 @@
 (function() {
     'use strict';
 
+    // Animation duration in milliseconds (must match CSS animation)
+    var ANIMATION_DURATION_MS = 300;
+
     /**
      * Initialize Trustpilot widget functionality
      */
@@ -30,7 +33,7 @@
     function dismissWidget(widget) {
         widget.classList.add('dismissing');
         
-        // Wait for animation to complete
+        // Wait for animation to complete (uses ANIMATION_DURATION_MS constant)
         setTimeout(function() {
             widget.style.display = 'none';
             
@@ -41,7 +44,7 @@
             } catch (e) {
                 // localStorage not available, ignore
             }
-        }, 300);
+        }, ANIMATION_DURATION_MS);
     }
 
     /**

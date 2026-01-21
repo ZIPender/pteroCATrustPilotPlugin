@@ -29,34 +29,3 @@
         </div>
     </div>
 </div>
-
-<style>
-.trustpilot-widget {
-    border-left: 4px solid #00b67a;
-}
-.trustpilot-widget .card-header {
-    background: linear-gradient(135deg, #00b67a 0%, #00a269 100%) !important;
-}
-.trustpilot-widget .btn-success {
-    background-color: #00b67a;
-    border-color: #00b67a;
-}
-.trustpilot-widget .btn-success:hover {
-    background-color: #00a269;
-    border-color: #00a269;
-}
-</style>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    var dismissBtn = document.querySelector('.trustpilot-dismiss');
-    if (dismissBtn) {
-        dismissBtn.addEventListener('click', function() {
-            var widget = document.getElementById('trustpilot-review-widget');
-            if (widget) {
-                widget.style.display = 'none';
-            }
-        });
-    }
-});
-</script>

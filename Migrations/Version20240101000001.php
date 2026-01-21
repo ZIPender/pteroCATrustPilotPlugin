@@ -23,6 +23,7 @@ final class Version20240101000001 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // Create dismissal table (MySQL compatible)
+        // The unique constraint on (user_id, server_id) automatically creates an index
         $this->addSql('
             CREATE TABLE plg_trustpilot_dismissal (
                 id INT AUTO_INCREMENT NOT NULL,
@@ -31,8 +32,7 @@ final class Version20240101000001 extends AbstractMigration
                 dismissed_at DATETIME NOT NULL COMMENT \'(DC2Type:datetime_immutable)\',
                 created_at DATETIME NOT NULL COMMENT \'(DC2Type:datetime_immutable)\',
                 PRIMARY KEY(id),
-                UNIQUE INDEX unique_user_server (user_id, server_id),
-                INDEX idx_trustpilot_user_server (user_id, server_id)
+                UNIQUE INDEX unique_user_server (user_id, server_id)
             ) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB
         ');
     }
