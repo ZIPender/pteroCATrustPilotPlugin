@@ -11,18 +11,73 @@ A plugin for PteroCA Panel (v0.6+) that prompts users to leave a Trustpilot revi
 - 📊 **Analytics**: View statistics on popup dismissals and user engagement
 - 🎨 **Beautiful UI**: Modern, responsive design with smooth animations
 
-## Quick Start
+## Installation
+
+### Method 1: Upload via Panel (Recommended)
+
+PteroCA supports installing plugins via ZIP file upload in the admin panel.
+
+#### Creating the ZIP File
+
+**Option A: Download from GitHub Releases**
+1. Go to the [Releases](https://github.com/ZIPender/pteroCATrustPilotPlugin/releases) page
+2. Download the latest `.zip` file
+
+**Option B: Create ZIP from Repository**
 
 ```bash
-# Install
-git clone https://github.com/ZIPender/pteroCATrustPilotPlugin.git plugins/TrustpilotReview
+# Clone the repository
+git clone https://github.com/ZIPender/pteroCATrustPilotPlugin.git
 
-# Setup
+# Navigate into the directory
+cd pteroCATrustPilotPlugin
+
+# Create the ZIP file (excluding .git and unnecessary files)
+zip -r TrustpilotReview.zip . -x "*.git*" -x "node_modules/*" -x "vendor/*" -x "*.log" -x ".DS_Store" -x "*.swp" -x "*.tmp" -x ".env*"
+```
+
+Or on Windows (PowerShell):
+```powershell
+# Clone the repository
+git clone https://github.com/ZIPender/pteroCATrustPilotPlugin.git
+
+# Navigate into the directory
+cd pteroCATrustPilotPlugin
+
+# Remove .git folder before zipping (required to reduce size)
+Remove-Item -Recurse -Force .git -ErrorAction SilentlyContinue
+
+# Create the ZIP file
+Compress-Archive -Path * -DestinationPath TrustpilotReview.zip -Force
+```
+
+#### Uploading to PteroCA
+
+1. Navigate to **Settings → Plugins** in the PteroCA admin panel
+2. Click the **"Upload Plugin"** button
+3. Select the `TrustpilotReview.zip` file you created
+4. The plugin will be automatically installed
+5. Enable the plugin in the plugins list
+6. Configure plugin settings (see [Configuration](#configuration) below)
+
+### Method 2: Manual Installation
+
+```bash
+# Clone directly into plugins directory
+git clone https://github.com/ZIPender/pteroCATrustPilotPlugin.git /path/to/pteroca/plugins/TrustpilotReview
+
+# Run migrations
 php artisan migrate
-php artisan vendor:publish --tag=trustpilot-assets
 
-# Configure
-# Add to .env:
+# Publish assets
+php artisan vendor:publish --tag=trustpilot-assets
+```
+
+## Configuration
+
+After installation, configure the plugin via the PteroCA admin panel or by adding these environment variables to your `.env` file:
+
+```env
 TRUSTPILOT_ENABLED=true
 TRUSTPILOT_DAYS_BEFORE_EXPIRY=7
 TRUSTPILOT_REVIEW_URL=https://www.trustpilot.com/evaluate/your-business
