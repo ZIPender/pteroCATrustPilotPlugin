@@ -1,8 +1,10 @@
 // Main entry point for Trustpilot plugin frontend
 // This file exports the main components for use in the PteroCA Panel
 
-export { default as TrustpilotPopup } from './TrustpilotPopup.jsx';
-export { default as AdminSettings } from './AdminSettings.jsx';
+import TrustpilotPopup from './TrustpilotPopup.jsx';
+import AdminSettings from './AdminSettings.jsx';
+
+export { TrustpilotPopup, AdminSettings };
 
 // Hook to integrate with PteroCA Panel
 export const initTrustpilotPlugin = (serverData) => {
@@ -25,7 +27,6 @@ export const initTrustpilotPlugin = (serverData) => {
     // Import React and ReactDOM dynamically if needed
     // In a real implementation, these would be available from the panel
     if (typeof React !== 'undefined' && typeof ReactDOM !== 'undefined') {
-        const { TrustpilotPopup } = require('./TrustpilotPopup.jsx');
         ReactDOM.render(
             React.createElement(TrustpilotPopup, {
                 serverId: serverData.id,
@@ -46,7 +47,6 @@ export const initAdminSettings = () => {
     }
 
     if (typeof React !== 'undefined' && typeof ReactDOM !== 'undefined') {
-        const { AdminSettings } = require('./AdminSettings.jsx');
         ReactDOM.render(
             React.createElement(AdminSettings),
             container

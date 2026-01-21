@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import './TrustpilotPopup.css';
+import '../css/TrustpilotPopup.css';
 
 const TrustpilotPopup = ({ serverId, userId }) => {
     const [showPopup, setShowPopup] = useState(false);

@@ -4,6 +4,7 @@ namespace Plugins\TrustpilotReview;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Route;
+use Plugins\TrustpilotReview\Services\TrustpilotService;
 
 class TrustpilotPlugin extends ServiceProvider
 {

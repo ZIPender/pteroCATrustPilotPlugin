@@ -16,8 +16,11 @@ class TrustpilotService
      */
     public function shouldShowPopup($userId, $serverId)
     {
+        // Get settings from database
+        $settings = $this->getSettingsFromDatabase();
+        
         // Check if plugin is enabled
-        if (!config('trustpilot.enabled')) {
+        if (!$settings['enabled']) {
             return ['show' => false];
         }
 
@@ -43,14 +46,14 @@ class TrustpilotService
 
         $expiresAt = Carbon::parse($server->expires_at);
         $daysUntilExpiry = now()->diffInDays($expiresAt, false);
-        $daysBeforeExpiry = config('trustpilot.days_before_expiry', 7);
+        $daysBeforeExpiry = $settings['days_before_expiry'];
 
         // Show popup if server expires within configured days
         if ($daysUntilExpiry <= $daysBeforeExpiry && $daysUntilExpiry >= 0) {
             return [
                 'show' => true,
                 'days_until_expiry' => (int) $daysUntilExpiry,
-                'review_url' => config('trustpilot.review_url'),
+                'review_url' => $settings['review_url'],
             ];
         }
 
@@ -76,17 +79,29 @@ class TrustpilotService
     }
 
     /**
+     * Get plugin settings from database
+     *
+     * @return array
+     */
+    private function getSettingsFromDatabase()
+    {
+        $settingsArray = DB::table('trustpilot_settings')->pluck('value', 'key')->toArray();
+
+        return [
+            'days_before_expiry' => (int) ($settingsArray['days_before_expiry'] ?? config('trustpilot.days_before_expiry', 7)),
+            'review_url' => $settingsArray['review_url'] ?? config('trustpilot.review_url', ''),
+            'enabled' => (bool) ($settingsArray['enabled'] ?? config('trustpilot.enabled', true)),
+        ];
+    }
+
+    /**
      * Get plugin settings
      *
      * @return array
      */
     public function getSettings()
     {
-        return [
-            'days_before_expiry' => config('trustpilot.days_before_expiry'),
-            'review_url' => config('trustpilot.review_url'),
-            'enabled' => config('trustpilot.enabled'),
-        ];
+        return $this->getSettingsFromDatabase();
     }
 
     /**
@@ -97,9 +112,16 @@ class TrustpilotService
      */
     public function updateSettings($settings)
     {
-        // In a real implementation, this would update the settings
-        // in the database or config file. For now, we'll just return true.
-        // This would typically update a settings table or environment config.
+        foreach ($settings as $key => $value) {
+            DB::table('trustpilot_settings')->updateOrInsert(
+                ['key' => $key],
+                [
+                    'value' => is_bool($value) ? ($value ? '1' : '0') : $value,
+                    'updated_at' => now(),
+                ]
+            );
+        }
+
         return true;
     }
 }

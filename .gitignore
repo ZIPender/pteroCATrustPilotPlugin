@@ -39,3 +39,6 @@ composer.lock
 
 # Cache
 .cache/
+
+# Demo files (not part of plugin)
+demo.html
