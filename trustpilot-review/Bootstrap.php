@@ -5,17 +5,6 @@ namespace Plugins\TrustpilotReview;
 use App\Core\Service\Plugin\PluginSettingService;
 use Psr\Log\LoggerInterface;
 
-/**
- * Bootstrap class for Trustpilot Review plugin initialization.
- *
- * The Bootstrap class is invoked when the plugin is enabled and provides
- * a centralized place for:
- * - Initializing default settings
- * - Registering custom services
- * - Setting up event listeners programmatically
- * - Performing one-time setup tasks
- * - Logging plugin startup
- */
 class Bootstrap
 {
     public function __construct(
@@ -23,62 +12,85 @@ class Bootstrap
         private readonly LoggerInterface $logger,
     ) {}
 
-    /**
-     * Initialize the plugin.
-     *
-     * This method is called once when the plugin is enabled.
-     */
     public function initialize(): void
     {
         $this->logger->info('Trustpilot Review plugin: Bootstrap initialization started');
 
         try {
-            // Verify configuration
             $this->verifyConfiguration();
-
-            $this->logger->info('Trustpilot Review plugin: Bootstrap initialization completed successfully');
+            $this->logger->info('Trustpilot Review plugin: Bootstrap initialization completed');
         } catch (\Exception $e) {
             $this->logger->error('Trustpilot Review plugin: Bootstrap initialization failed', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
-
             throw $e;
         }
     }
 
-    /**
-     * Verify plugin configuration.
-     */
     private function verifyConfiguration(): void
     {
         $enabled = (bool) $this->pluginSettingService->get('trustpilot-review', 'enabled', true);
-        $reviewUrl = $this->pluginSettingService->get('trustpilot-review', 'review_url', '');
-        $daysBeforeExpiry = (int) $this->pluginSettingService->get('trustpilot-review', 'days_before_expiry', 7);
 
-        if ($enabled) {
-            if (empty($reviewUrl) || $reviewUrl === 'https://www.trustpilot.com/evaluate/your-business') {
-                $this->logger->warning('Trustpilot Review plugin: Review URL not configured. Please set your Trustpilot business URL in plugin settings.');
-            } else {
-                $this->logger->info('Trustpilot Review plugin: Configured', [
-                    'review_url' => $reviewUrl,
-                    'days_before_expiry' => $daysBeforeExpiry,
-                ]);
-            }
-        } else {
+        if (!$enabled) {
             $this->logger->info('Trustpilot Review plugin: Plugin is disabled');
+            return;
         }
+
+        // General settings
+        $reviewUrl = $this->pluginSettingService->get('trustpilot-review', 'review_url', '');
+        if (empty($reviewUrl) || $reviewUrl === 'https://www.trustpilot.com/evaluate/your-business') {
+            $this->logger->warning('Trustpilot: Review URL not configured. Please set your Trustpilot business URL.');
+        }
+
+        // API credentials
+        $apiKey = $this->pluginSettingService->get('trustpilot-review', 'api_key', '');
+        $apiSecret = $this->pluginSettingService->get('trustpilot-review', 'api_secret', '');
+        $businessUnitId = $this->pluginSettingService->get('trustpilot-review', 'business_unit_id', '');
+        $businessDomain = $this->pluginSettingService->get('trustpilot-review', 'business_domain', '');
+
+        if (empty($apiKey)) {
+            $this->logger->warning('Trustpilot: API key not configured. Widget data and AFS invitations will not work.');
+        } elseif (empty($apiSecret)) {
+            $this->logger->warning('Trustpilot: API secret not configured. AFS invitations will not work.');
+        }
+
+        if (empty($businessUnitId) && empty($businessDomain)) {
+            $this->logger->warning('Trustpilot: Neither Business Unit ID nor Business Domain is configured.');
+        }
+
+        // AFS settings
+        $afsEnabled = (bool) $this->pluginSettingService->get('trustpilot-review', 'afs_enabled', false);
+        if ($afsEnabled) {
+            if (empty($apiKey) || empty($apiSecret)) {
+                $this->logger->warning('Trustpilot: AFS is enabled but API credentials are missing.');
+            }
+
+            $senderEmail = $this->pluginSettingService->get('trustpilot-review', 'afs_sender_email', '');
+            $senderName = $this->pluginSettingService->get('trustpilot-review', 'afs_sender_name', '');
+            if (empty($senderEmail) || empty($senderName)) {
+                $this->logger->warning('Trustpilot: AFS sender email or name not configured. Invitations may fail.');
+            }
+        }
+
+        // Display mode
+        $displayMode = $this->pluginSettingService->get('trustpilot-review', 'display_mode', 'custom');
+        if ($displayMode === 'trustbox' && empty($businessUnitId) && empty($businessDomain)) {
+            $this->logger->warning('Trustpilot: TrustBox mode requires a Business Unit ID or Business Domain.');
+        }
+        if ($displayMode === 'custom' && empty($apiKey)) {
+            $this->logger->warning('Trustpilot: Custom carousel mode requires an API key to fetch reviews.');
+        }
+
+        $this->logger->info('Trustpilot Review plugin: Configuration verified', [
+            'display_mode' => $displayMode,
+            'afs_enabled' => $afsEnabled,
+            'api_configured' => !empty($apiKey),
+        ]);
     }
 
-    /**
-     * Cleanup method called when plugin is disabled.
-     */
     public function cleanup(): void
     {
-        $this->logger->info('Trustpilot Review plugin: Bootstrap cleanup started');
-
-        // No cleanup needed - settings are preserved in case plugin is re-enabled
-
-        $this->logger->info('Trustpilot Review plugin: Bootstrap cleanup completed');
+        $this->logger->info('Trustpilot Review plugin: Cleanup completed (settings preserved)');
     }
 }
