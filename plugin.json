@@ -2,7 +2,7 @@
     "name": "trustpilot-review",
     "display_name": "Trustpilot Review Plugin",
     "version": "1.2.0",
-    "author": "PteroCA Community",
+    "author": "ZIPender",
     "description": "Displays a permanent Trustpilot review card on the dashboard with dynamic rating and review count from your Trustpilot page.",
     "license": "MIT",
     "pteroca": {
