@@ -2,7 +2,7 @@
     "name": "trustpilot-review",
     "display_name": "Trustpilot Review Plugin",
     "version": "2.0.0",
-    "author": "PteroCA Community",
+    "author": "ZIPender",
     "description": "Trustpilot integration with AFS review invitations, TrustBox widget embed, and custom review carousel with full admin configuration.",
     "license": "MIT",
     "pteroca": {
@@ -22,24 +22,24 @@
             "default": true,
             "hierarchy": "general",
             "required": false,
-            "label": "plugin_trustpilot_review.settings.enabled",
-            "help": "plugin_trustpilot_review.settings.enabled_help"
+            "label": "Enable Plugin",
+            "help": "Enable or disable the Trustpilot plugin globally"
         },
         "review_url": {
             "type": "string",
             "default": "https://www.trustpilot.com/evaluate/your-business",
             "hierarchy": "general",
             "required": true,
-            "label": "plugin_trustpilot_review.settings.review_url",
-            "help": "plugin_trustpilot_review.settings.review_url_help"
+            "label": "Trustpilot Review URL",
+            "help": "Your Trustpilot page URL (e.g. https://www.trustpilot.com/review/example.com)"
         },
         "test_mode": {
             "type": "boolean",
             "default": false,
             "hierarchy": "general",
             "required": false,
-            "label": "plugin_trustpilot_review.settings.test_mode",
-            "help": "plugin_trustpilot_review.settings.test_mode_help"
+            "label": "Test Mode",
+            "help": "Shows a TEST MODE badge on the widget. Disable in production!"
         },
 
         "api_key": {
@@ -47,32 +47,32 @@
             "default": "",
             "hierarchy": "api",
             "required": true,
-            "label": "plugin_trustpilot_review.settings.api_key",
-            "help": "plugin_trustpilot_review.settings.api_key_help"
+            "label": "API Key (Client ID)",
+            "help": "Your Trustpilot API key from Trustpilot Business > Integrations > API"
         },
         "api_secret": {
             "type": "string",
             "default": "",
             "hierarchy": "api",
             "required": true,
-            "label": "plugin_trustpilot_review.settings.api_secret",
-            "help": "plugin_trustpilot_review.settings.api_secret_help"
+            "label": "API Secret",
+            "help": "Your Trustpilot API secret for OAuth authentication"
         },
         "business_unit_id": {
             "type": "string",
             "default": "",
             "hierarchy": "api",
             "required": false,
-            "label": "plugin_trustpilot_review.settings.business_unit_id",
-            "help": "plugin_trustpilot_review.settings.business_unit_id_help"
+            "label": "Business Unit ID",
+            "help": "Your Trustpilot Business Unit ID. Find it in Trustpilot Business > Settings, or leave empty and set Business Domain instead"
         },
         "business_domain": {
             "type": "string",
             "default": "",
             "hierarchy": "api",
             "required": false,
-            "label": "plugin_trustpilot_review.settings.business_domain",
-            "help": "plugin_trustpilot_review.settings.business_domain_help"
+            "label": "Business Domain",
+            "help": "Your business domain (e.g. hosting.ezha.fr). Used to auto-detect Business Unit ID if not set above"
         },
 
         "afs_enabled": {
@@ -80,72 +80,72 @@
             "default": false,
             "hierarchy": "afs",
             "required": false,
-            "label": "plugin_trustpilot_review.settings.afs_enabled",
-            "help": "plugin_trustpilot_review.settings.afs_enabled_help"
+            "label": "Enable Review Invitations (AFS)",
+            "help": "Automatically send Trustpilot review invitation emails to customers after server purchases. Reviews will be marked as 'Verified'"
         },
         "afs_send_mode": {
             "type": "string",
             "default": "immediate",
             "hierarchy": "afs",
             "required": false,
-            "label": "plugin_trustpilot_review.settings.afs_send_mode",
-            "help": "plugin_trustpilot_review.settings.afs_send_mode_help"
+            "label": "Send Mode",
+            "help": "When to send the invitation: 'immediate' = right after purchase, 'delayed' = wait N hours (set below)"
         },
         "afs_delay_hours": {
             "type": "integer",
             "default": 72,
             "hierarchy": "afs",
             "required": false,
-            "label": "plugin_trustpilot_review.settings.afs_delay_hours",
-            "help": "plugin_trustpilot_review.settings.afs_delay_hours_help"
+            "label": "Delay (hours)",
+            "help": "Hours to wait before sending (only for delayed mode). Default 72h = 3 days. Requires cron: */15 * * * * php bin/console trustpilot:send-invitations"
         },
         "afs_sender_email": {
             "type": "string",
             "default": "",
             "hierarchy": "afs",
             "required": false,
-            "label": "plugin_trustpilot_review.settings.afs_sender_email",
-            "help": "plugin_trustpilot_review.settings.afs_sender_email_help"
+            "label": "Sender Email",
+            "help": "Email shown as sender in the invitation (e.g. noreply@hosting.ezha.fr)"
         },
         "afs_sender_name": {
             "type": "string",
             "default": "",
             "hierarchy": "afs",
             "required": false,
-            "label": "plugin_trustpilot_review.settings.afs_sender_name",
-            "help": "plugin_trustpilot_review.settings.afs_sender_name_help"
+            "label": "Sender Name",
+            "help": "Company name shown in the invitation email"
         },
         "afs_reply_to": {
             "type": "string",
             "default": "",
             "hierarchy": "afs",
             "required": false,
-            "label": "plugin_trustpilot_review.settings.afs_reply_to",
-            "help": "plugin_trustpilot_review.settings.afs_reply_to_help"
+            "label": "Reply-To Email",
+            "help": "Where customer replies go (e.g. support@hosting.ezha.fr)"
         },
         "afs_template_id": {
             "type": "string",
             "default": "",
             "hierarchy": "afs",
             "required": false,
-            "label": "plugin_trustpilot_review.settings.afs_template_id",
-            "help": "plugin_trustpilot_review.settings.afs_template_id_help"
+            "label": "Email Template ID",
+            "help": "Trustpilot invitation email template ID. Leave blank to use the default template"
         },
         "afs_redirect_uri": {
             "type": "string",
             "default": "",
             "hierarchy": "afs",
             "required": false,
-            "label": "plugin_trustpilot_review.settings.afs_redirect_uri",
-            "help": "plugin_trustpilot_review.settings.afs_redirect_uri_help"
+            "label": "Post-Review Redirect URL",
+            "help": "URL the customer is sent to after submitting their review (e.g. https://hosting.ezha.fr/thank-you)"
         },
         "afs_locale": {
             "type": "string",
             "default": "en-US",
             "hierarchy": "afs",
             "required": false,
-            "label": "plugin_trustpilot_review.settings.afs_locale",
-            "help": "plugin_trustpilot_review.settings.afs_locale_help"
+            "label": "Invitation Email Language",
+            "help": "Language of the Trustpilot invitation email sent to customers (e.g. en-US, fr-FR, de-DE). This does NOT affect the panel UI"
         },
 
         "enable_widget": {
@@ -153,88 +153,104 @@
             "default": true,
             "hierarchy": "widget",
             "required": false,
-            "label": "plugin_trustpilot_review.settings.enable_widget",
-            "help": "plugin_trustpilot_review.settings.enable_widget_help"
+            "label": "Enable Dashboard Widget",
+            "help": "Show the Trustpilot widget on the user dashboard"
         },
         "display_mode": {
             "type": "string",
             "default": "custom",
             "hierarchy": "widget",
             "required": false,
-            "label": "plugin_trustpilot_review.settings.display_mode",
-            "help": "plugin_trustpilot_review.settings.display_mode_help"
+            "label": "Display Mode",
+            "help": "'trustbox' = official Trustpilot embed widget, 'custom' = custom review carousel with your score and latest reviews"
         },
-        "popup_title": {
+        "popup_title_en": {
             "type": "string",
             "default": "Enjoying our service?",
             "hierarchy": "widget",
             "required": false,
-            "label": "plugin_trustpilot_review.settings.popup_title",
-            "help": "plugin_trustpilot_review.settings.popup_title_help"
+            "label": "Widget Title (English)",
+            "help": "Title shown in the widget header for English users (custom mode only)"
         },
-        "popup_message": {
+        "popup_title_fr": {
+            "type": "string",
+            "default": "Vous appréciez notre service ?",
+            "hierarchy": "widget",
+            "required": false,
+            "label": "Widget Title (French)",
+            "help": "Title shown in the widget header for French users (custom mode only)"
+        },
+        "popup_message_en": {
             "type": "string",
             "default": "If you've enjoyed our service, we'd love to hear your feedback on Trustpilot!",
             "hierarchy": "widget",
             "required": false,
-            "label": "plugin_trustpilot_review.settings.popup_message",
-            "help": "plugin_trustpilot_review.settings.popup_message_help"
+            "label": "Widget Message (English)",
+            "help": "Message shown below the reviews for English users (custom mode only)"
+        },
+        "popup_message_fr": {
+            "type": "string",
+            "default": "Si vous avez apprécié notre service, nous serions ravis d'avoir votre avis sur Trustpilot !",
+            "hierarchy": "widget",
+            "required": false,
+            "label": "Widget Message (French)",
+            "help": "Message shown below the reviews for French users (custom mode only)"
         },
         "show_leave_review_button": {
             "type": "boolean",
             "default": true,
             "hierarchy": "widget",
             "required": false,
-            "label": "plugin_trustpilot_review.settings.show_leave_review_button",
-            "help": "plugin_trustpilot_review.settings.show_leave_review_button_help"
+            "label": "Show 'Leave a Review' Button",
+            "help": "Show the review button in the widget footer (custom mode only)"
         },
         "trustbox_template_id": {
             "type": "string",
             "default": "53aa8912dec7e10d38f59f36",
             "hierarchy": "widget",
             "required": false,
-            "label": "plugin_trustpilot_review.settings.trustbox_template_id",
-            "help": "plugin_trustpilot_review.settings.trustbox_template_id_help"
+            "label": "TrustBox Template ID",
+            "help": "Carousel: 53aa8912dec7e10d38f59f36 | Mini: 53aa8807dec7e10d38f59f32 | Micro Star: 5419b732fbfb950b10de65e5 (trustbox mode only)"
         },
         "trustbox_theme": {
             "type": "string",
             "default": "light",
             "hierarchy": "widget",
             "required": false,
-            "label": "plugin_trustpilot_review.settings.trustbox_theme",
-            "help": "plugin_trustpilot_review.settings.trustbox_theme_help"
+            "label": "TrustBox Theme",
+            "help": "'light' or 'dark' (trustbox mode only)"
         },
         "trustbox_height": {
             "type": "string",
             "default": "140px",
             "hierarchy": "widget",
             "required": false,
-            "label": "plugin_trustpilot_review.settings.trustbox_height",
-            "help": "plugin_trustpilot_review.settings.trustbox_height_help"
+            "label": "TrustBox Height",
+            "help": "Height of the TrustBox widget, e.g. 140px or 240px (trustbox mode only)"
         },
         "trustbox_stars": {
             "type": "string",
             "default": "4,5",
             "hierarchy": "widget",
             "required": false,
-            "label": "plugin_trustpilot_review.settings.trustbox_stars",
-            "help": "plugin_trustpilot_review.settings.trustbox_stars_help"
+            "label": "TrustBox Star Filter",
+            "help": "Which star ratings to display, e.g. '4,5' = only 4 and 5 stars (trustbox mode only)"
         },
         "carousel_review_count": {
             "type": "integer",
             "default": 5,
             "hierarchy": "widget",
             "required": false,
-            "label": "plugin_trustpilot_review.settings.carousel_review_count",
-            "help": "plugin_trustpilot_review.settings.carousel_review_count_help"
+            "label": "Number of Reviews",
+            "help": "How many reviews to show in the carousel, 1-10 (custom mode only)"
         },
         "carousel_min_stars": {
             "type": "integer",
             "default": 4,
             "hierarchy": "widget",
             "required": false,
-            "label": "plugin_trustpilot_review.settings.carousel_min_stars",
-            "help": "plugin_trustpilot_review.settings.carousel_min_stars_help"
+            "label": "Minimum Stars Filter",
+            "help": "Only show reviews with this many stars or more, 1-5 (custom mode only)"
         }
     },
     "assets": {

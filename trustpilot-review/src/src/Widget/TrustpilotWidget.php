@@ -7,12 +7,14 @@ use App\Core\Enum\WidgetContext;
 use App\Core\Enum\WidgetPosition;
 use App\Core\Service\Plugin\PluginSettingService;
 use Plugins\TrustpilotReview\Service\TrustpilotService;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class TrustpilotWidget implements WidgetInterface
 {
     public function __construct(
         private readonly PluginSettingService $pluginSettingService,
         private readonly TrustpilotService $trustpilotService,
+        private readonly TranslatorInterface $translator,
     ) {}
 
     public function getName(): string
@@ -50,6 +52,10 @@ class TrustpilotWidget implements WidgetInterface
         $settings = $this->trustpilotService->getSettings();
         $trustpilotData = $this->trustpilotService->getTrustpilotData();
 
+        // Translate UI strings using Symfony translator (picks up panel locale automatically)
+        $domain = 'plugin_trustpilot_review';
+        $t = fn(string $key, string $fallback): string => $this->translate($key, $domain, $fallback);
+
         $data = [
             'review_url' => $settings['review_url'],
             'popup_title' => $settings['popup_title'],
@@ -61,6 +67,11 @@ class TrustpilotWidget implements WidgetInterface
             'trustpilot_score' => $trustpilotData['score'],
             'trustpilot_stars' => $trustpilotData['stars'],
             'trustpilot_reviews_count' => $trustpilotData['reviews_count'],
+            // Pre-translated UI strings
+            'label_reviews' => $t('plugin_trustpilot_review.widget.reviews', 'reviews'),
+            'label_no_reviews' => $t('plugin_trustpilot_review.widget.no_reviews', 'No reviews yet'),
+            'label_powered_by' => $t('plugin_trustpilot_review.widget.powered_by', 'Powered by Trustpilot'),
+            'label_leave_review' => $t('plugin_trustpilot_review.widget.leave_review', 'Leave a Review'),
         ];
 
         if ($settings['display_mode'] === 'trustbox') {
@@ -101,5 +112,12 @@ class TrustpilotWidget implements WidgetInterface
     public function getColumnSize(): int
     {
         return 12;
+    }
+
+    private function translate(string $key, string $domain, string $fallback): string
+    {
+        $translated = $this->translator->trans($key, [], $domain);
+        // If translator returns the key unchanged, it means no translation was found
+        return ($translated === $key) ? $fallback : $translated;
     }
 }

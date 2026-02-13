@@ -3,244 +3,503 @@
 namespace Plugins\TrustpilotReview\Service;
 
 use App\Core\Service\Plugin\PluginSettingService;
+use Doctrine\ORM\EntityManagerInterface;
+use Plugins\TrustpilotReview\Entity\InvitationLog;
+use Plugins\TrustpilotReview\Entity\Repository\InvitationLogRepository;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-/**
- * Service for Trustpilot Review plugin business logic.
- *
- * Handles fetching Trustpilot ratings and reviews count.
- */
 class TrustpilotService
 {
-    private const CACHE_TTL = 3600; // Cache for 1 hour
+    private const PLUGIN_ID = 'trustpilot-review';
+    private const CACHE_TTL = 3600;
+    private const TOKEN_CACHE_KEY = 'trustpilot_oauth_token';
+    private const BU_CACHE_TTL = 86400; // 24 hours
+
+    private const API_BASE = 'https://api.trustpilot.com/v1';
+    private const INVITATIONS_API_BASE = 'https://invitations-api.trustpilot.com/v1';
+    private const TOKEN_ENDPOINT = self::API_BASE . '/oauth/oauth-business-users-for-applications/accesstoken';
 
     public function __construct(
         private readonly PluginSettingService $pluginSettingService,
         private readonly LoggerInterface $logger,
         private readonly HttpClientInterface $httpClient,
         private readonly CacheInterface $cache,
+        private readonly EntityManagerInterface $entityManager,
+        private readonly InvitationLogRepository $invitationLogRepository,
     ) {}
 
-    /**
-     * Get Trustpilot data (score and reviews count) from the review URL.
-     *
-     * @param string $reviewUrl The Trustpilot review URL
-     * @return array{score: float, reviews_count: int}
-     */
-    public function getTrustpilotData(string $reviewUrl): array
+    // ──────────────────────────────────────────────
+    // OAuth Authentication
+    // ──────────────────────────────────────────────
+
+    public function getAccessToken(): string
     {
-        $businessName = $this->extractBusinessName($reviewUrl);
-        
-        if (empty($businessName)) {
-            $this->logger->warning('Trustpilot Review: Could not extract business name from URL', [
-                'url' => $reviewUrl,
-            ]);
-            return $this->getDefaultData();
-        }
+        return $this->cache->get(self::TOKEN_CACHE_KEY, function (ItemInterface $item) {
+            $apiKey = $this->getSetting('api_key');
+            $apiSecret = $this->getSetting('api_secret');
 
-        $cacheKey = 'trustpilot_data_' . md5($businessName);
-
-        try {
-            return $this->cache->get($cacheKey, function (ItemInterface $item) use ($businessName) {
-                $item->expiresAfter(self::CACHE_TTL);
-                return $this->fetchTrustpilotData($businessName);
-            });
-        } catch (\Exception $e) {
-            $this->logger->error('Trustpilot Review: Failed to fetch data', [
-                'business' => $businessName,
-                'error' => $e->getMessage(),
-            ]);
-            return $this->getDefaultData();
-        }
-    }
-
-    /**
-     * Extract business name from Trustpilot URL.
-     *
-     * @param string $url The Trustpilot URL
-     * @return string|null The business name or null if not found
-     */
-    private function extractBusinessName(string $url): ?string
-    {
-        // Handle various Trustpilot URL formats:
-        // https://www.trustpilot.com/review/example.com
-        // https://www.trustpilot.com/evaluate/example.com
-        // https://fr.trustpilot.com/review/example.com
-        
-        $patterns = [
-            '#trustpilot\.com/review/([^/?]+)#i',
-            '#trustpilot\.com/evaluate/([^/?]+)#i',
-        ];
-
-        foreach ($patterns as $pattern) {
-            if (preg_match($pattern, $url, $matches)) {
-                return $matches[1];
+            if (empty($apiKey) || empty($apiSecret)) {
+                throw new \RuntimeException('Trustpilot API key and secret are required for authentication');
             }
-        }
 
-        return null;
-    }
-
-    /**
-     * Fetch Trustpilot data from their public page.
-     *
-     * @param string $businessName The business name/domain
-     * @return array{score: float, reviews_count: int}
-     */
-    private function fetchTrustpilotData(string $businessName): array
-    {
-        try {
-            $url = 'https://www.trustpilot.com/review/' . urlencode($businessName);
-            
-            $response = $this->httpClient->request('GET', $url, [
+            $response = $this->httpClient->request('POST', self::TOKEN_ENDPOINT, [
                 'headers' => [
-                    'User-Agent' => 'Mozilla/5.0 (compatible; TrustpilotWidget/1.0)',
-                    'Accept' => 'text/html',
+                    'Authorization' => 'Basic ' . base64_encode($apiKey . ':' . $apiSecret),
+                    'Content-Type' => 'application/x-www-form-urlencoded',
                 ],
+                'body' => 'grant_type=client_credentials',
                 'timeout' => 10,
             ]);
 
-            $html = $response->getContent();
+            $data = $response->toArray();
 
-            // Extract score from JSON-LD structured data
-            $score = $this->extractScoreFromHtml($html);
-            $reviewsCount = $this->extractReviewsCountFromHtml($html);
+            if (empty($data['access_token'])) {
+                throw new \RuntimeException('Trustpilot OAuth response missing access_token');
+            }
 
-            $this->logger->info('Trustpilot Review: Successfully fetched data', [
-                'business' => $businessName,
-                'score' => $score,
-                'reviews_count' => $reviewsCount,
+            $expiresIn = (int) ($data['expires_in'] ?? 3600);
+            $item->expiresAfter(max($expiresIn - 60, 60));
+
+            $this->logger->info('Trustpilot: OAuth token acquired', [
+                'expires_in' => $expiresIn,
             ]);
 
-            return [
-                'score' => $score,
-                'reviews_count' => $reviewsCount,
-            ];
+            return $data['access_token'];
+        });
+    }
+
+    // ──────────────────────────────────────────────
+    // Business Unit Resolution
+    // ──────────────────────────────────────────────
+
+    public function resolveBusinessUnitId(): ?string
+    {
+        $buId = $this->getSetting('business_unit_id');
+        if (!empty($buId)) {
+            return $buId;
+        }
+
+        $domain = $this->getSetting('business_domain');
+        if (empty($domain)) {
+            $this->logger->warning('Trustpilot: Neither business_unit_id nor business_domain is configured');
+            return null;
+        }
+
+        $cacheKey = 'trustpilot_bu_id_' . md5($domain);
+
+        try {
+            return $this->cache->get($cacheKey, function (ItemInterface $item) use ($domain) {
+                $item->expiresAfter(self::BU_CACHE_TTL);
+
+                $apiKey = $this->getSetting('api_key');
+                if (empty($apiKey)) {
+                    throw new \RuntimeException('API key required to resolve business unit ID');
+                }
+
+                $response = $this->httpClient->request('GET', self::API_BASE . '/business-units/find', [
+                    'headers' => ['apikey' => $apiKey],
+                    'query' => ['name' => $domain],
+                    'timeout' => 10,
+                ]);
+
+                $data = $response->toArray();
+
+                if (empty($data['id'])) {
+                    throw new \RuntimeException('Could not find business unit for domain: ' . $domain);
+                }
+
+                $this->logger->info('Trustpilot: Resolved business unit ID', [
+                    'domain' => $domain,
+                    'business_unit_id' => $data['id'],
+                ]);
+
+                return $data['id'];
+            });
         } catch (\Exception $e) {
-            $this->logger->warning('Trustpilot Review: HTTP request failed', [
-                'business' => $businessName,
+            $this->logger->error('Trustpilot: Failed to resolve business unit ID', [
+                'domain' => $domain,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
+
+    // ──────────────────────────────────────────────
+    // Fetch Aggregate Data (score + review count)
+    // ──────────────────────────────────────────────
+
+    public function getTrustpilotData(): array
+    {
+        $buId = $this->resolveBusinessUnitId();
+        if (empty($buId)) {
+            return $this->getDefaultData();
+        }
+
+        $cacheKey = 'trustpilot_data_' . md5($buId);
+
+        try {
+            return $this->cache->get($cacheKey, function (ItemInterface $item) use ($buId) {
+                $item->expiresAfter(self::CACHE_TTL);
+
+                $apiKey = $this->getSetting('api_key');
+                if (empty($apiKey)) {
+                    return $this->getDefaultData();
+                }
+
+                $response = $this->httpClient->request('GET', self::API_BASE . '/business-units/' . $buId, [
+                    'headers' => ['apikey' => $apiKey],
+                    'timeout' => 10,
+                ]);
+
+                $data = $response->toArray();
+
+                $score = (float) ($data['score']['trustScore'] ?? 0);
+                $reviewsCount = (int) ($data['numberOfReviews']['total'] ?? 0);
+                $stars = (float) ($data['score']['stars'] ?? 0);
+
+                $this->logger->info('Trustpilot: Fetched aggregate data', [
+                    'score' => $score,
+                    'stars' => $stars,
+                    'reviews_count' => $reviewsCount,
+                ]);
+
+                return [
+                    'score' => $score,
+                    'stars' => $stars,
+                    'reviews_count' => $reviewsCount,
+                ];
+            });
+        } catch (\Exception $e) {
+            $this->logger->error('Trustpilot: Failed to fetch aggregate data', [
                 'error' => $e->getMessage(),
             ]);
             return $this->getDefaultData();
         }
     }
 
-    /**
-     * Extract score from Trustpilot HTML page.
-     *
-     * @param string $html The HTML content
-     * @return float The extracted score or default value
-     */
-    private function extractScoreFromHtml(string $html): float
+    // ──────────────────────────────────────────────
+    // Fetch Reviews (for custom carousel)
+    // ──────────────────────────────────────────────
+
+    public function fetchReviews(): array
     {
-        // Try to extract from JSON-LD structured data
-        if (preg_match('/<script[^>]*type="application\/ld\+json"[^>]*>(.*?)<\/script>/is', $html, $matches)) {
-            $jsonContent = $matches[1];
-            $data = json_decode($jsonContent, true);
-            
-            if (isset($data['aggregateRating']['ratingValue'])) {
-                return (float) $data['aggregateRating']['ratingValue'];
+        $buId = $this->resolveBusinessUnitId();
+        if (empty($buId)) {
+            return [];
+        }
+
+        $apiKey = $this->getSetting('api_key');
+        if (empty($apiKey)) {
+            return [];
+        }
+
+        $perPage = (int) $this->getSetting('carousel_review_count', 5);
+        $minStars = (int) $this->getSetting('carousel_min_stars', 4);
+
+        // Build stars filter: all ratings from minStars to 5
+        $starsFilter = implode(',', range($minStars, 5));
+
+        $cacheKey = 'trustpilot_reviews_' . md5($buId . '_' . $perPage . '_' . $starsFilter);
+
+        try {
+            return $this->cache->get($cacheKey, function (ItemInterface $item) use ($buId, $apiKey, $perPage, $starsFilter) {
+                $item->expiresAfter(self::CACHE_TTL);
+
+                $response = $this->httpClient->request('GET', self::API_BASE . '/business-units/' . $buId . '/reviews', [
+                    'headers' => ['apikey' => $apiKey],
+                    'query' => [
+                        'orderBy' => 'createdat.desc',
+                        'perPage' => $perPage,
+                        'stars' => $starsFilter,
+                    ],
+                    'timeout' => 10,
+                ]);
+
+                $data = $response->toArray();
+                $reviews = [];
+
+                foreach ($data['reviews'] ?? [] as $review) {
+                    $reviews[] = [
+                        'id' => $review['id'] ?? '',
+                        'title' => $review['title'] ?? '',
+                        'text' => $review['text'] ?? '',
+                        'stars' => (int) ($review['stars'] ?? 0),
+                        'created_at' => $review['createdAt'] ?? '',
+                        'consumer_name' => $review['consumer']['displayName'] ?? 'Anonymous',
+                    ];
+                }
+
+                $this->logger->info('Trustpilot: Fetched reviews', [
+                    'count' => count($reviews),
+                ]);
+
+                return $reviews;
+            });
+        } catch (\Exception $e) {
+            $this->logger->error('Trustpilot: Failed to fetch reviews', [
+                'error' => $e->getMessage(),
+            ]);
+            return [];
+        }
+    }
+
+    // ──────────────────────────────────────────────
+    // AFS - Invitation Management
+    // ──────────────────────────────────────────────
+
+    public function scheduleInvitation(int $userId, string $userEmail, string $userName, int $serverId): ?InvitationLog
+    {
+        if ($this->invitationLogRepository->hasExistingInvitation($userId, $serverId)) {
+            $this->logger->info('Trustpilot: Invitation already exists, skipping', [
+                'user_id' => $userId,
+                'server_id' => $serverId,
+            ]);
+            return $this->invitationLogRepository->findByUserAndServer($userId, $serverId);
+        }
+
+        $invitation = new InvitationLog();
+        $invitation->setUserId($userId);
+        $invitation->setUserEmail($userEmail);
+        $invitation->setUserName($userName);
+        $invitation->setServerId($serverId);
+        $invitation->setReferenceNumber('SERVER-' . $serverId);
+
+        $sendMode = $this->getSetting('afs_send_mode', 'immediate');
+
+        if ($sendMode === 'delayed') {
+            $delayHours = (int) $this->getSetting('afs_delay_hours', 72);
+            $invitation->setScheduledAt(new \DateTimeImmutable('+' . $delayHours . ' hours'));
+        }
+        // For immediate mode, scheduledAt defaults to now (set in constructor)
+
+        $this->entityManager->persist($invitation);
+        $this->entityManager->flush();
+
+        $this->logger->info('Trustpilot: Invitation scheduled', [
+            'user_id' => $userId,
+            'server_id' => $serverId,
+            'send_mode' => $sendMode,
+            'scheduled_at' => $invitation->getScheduledAt()->format('Y-m-d H:i:s'),
+        ]);
+
+        // If immediate, send right away
+        if ($sendMode === 'immediate') {
+            $this->sendInvitation($invitation);
+        }
+
+        return $invitation;
+    }
+
+    public function sendInvitation(InvitationLog $invitation): bool
+    {
+        $buId = $this->resolveBusinessUnitId();
+        if (empty($buId)) {
+            $invitation->setStatus(InvitationLog::STATUS_FAILED);
+            $invitation->setErrorMessage('Business unit ID not configured');
+            $this->entityManager->flush();
+            return false;
+        }
+
+        try {
+            $token = $this->getAccessToken();
+
+            $body = [
+                'consumerEmail' => $invitation->getUserEmail(),
+                'consumerName' => $invitation->getUserName(),
+                'referenceNumber' => $invitation->getReferenceNumber(),
+                'locale' => $this->getSetting('afs_locale', 'en-US'),
+                'type' => 'email',
+                'serviceReviewInvitation' => [],
+            ];
+
+            $senderEmail = $this->getSetting('afs_sender_email');
+            if (!empty($senderEmail)) {
+                $body['senderEmail'] = $senderEmail;
+            }
+
+            $senderName = $this->getSetting('afs_sender_name');
+            if (!empty($senderName)) {
+                $body['senderName'] = $senderName;
+            }
+
+            $replyTo = $this->getSetting('afs_reply_to');
+            if (!empty($replyTo)) {
+                $body['replyTo'] = $replyTo;
+            }
+
+            $templateId = $this->getSetting('afs_template_id');
+            if (!empty($templateId)) {
+                $body['serviceReviewInvitation']['templateId'] = $templateId;
+            }
+
+            $redirectUri = $this->getSetting('afs_redirect_uri');
+            if (!empty($redirectUri)) {
+                $body['serviceReviewInvitation']['redirectUri'] = $redirectUri;
+            }
+
+            // Remove empty serviceReviewInvitation if no properties set
+            if (empty($body['serviceReviewInvitation'])) {
+                unset($body['serviceReviewInvitation']);
+            }
+
+            $response = $this->httpClient->request(
+                'POST',
+                self::INVITATIONS_API_BASE . '/private/business-units/' . $buId . '/email-invitations',
+                [
+                    'headers' => [
+                        'Authorization' => 'Bearer ' . $token,
+                        'Content-Type' => 'application/json',
+                    ],
+                    'json' => $body,
+                    'timeout' => 15,
+                ]
+            );
+
+            $statusCode = $response->getStatusCode();
+            $responseBody = $response->getContent(false);
+
+            if ($statusCode >= 200 && $statusCode < 300) {
+                $invitation->setStatus(InvitationLog::STATUS_SENT);
+                $invitation->setSentAt(new \DateTimeImmutable());
+                $invitation->setTrustpilotResponse($responseBody);
+                $this->entityManager->flush();
+
+                $this->logger->info('Trustpilot: Invitation sent successfully', [
+                    'user_email' => $invitation->getUserEmail(),
+                    'reference' => $invitation->getReferenceNumber(),
+                ]);
+
+                return true;
+            }
+
+            $invitation->setStatus(InvitationLog::STATUS_FAILED);
+            $invitation->setErrorMessage('HTTP ' . $statusCode . ': ' . $responseBody);
+            $invitation->setTrustpilotResponse($responseBody);
+            $this->entityManager->flush();
+
+            $this->logger->error('Trustpilot: Invitation API returned error', [
+                'status_code' => $statusCode,
+                'response' => $responseBody,
+            ]);
+
+            return false;
+        } catch (\Exception $e) {
+            $invitation->setStatus(InvitationLog::STATUS_FAILED);
+            $invitation->setErrorMessage($e->getMessage());
+            $this->entityManager->flush();
+
+            $this->logger->error('Trustpilot: Failed to send invitation', [
+                'error' => $e->getMessage(),
+                'user_email' => $invitation->getUserEmail(),
+            ]);
+
+            return false;
+        }
+    }
+
+    public function processPendingInvitations(): int
+    {
+        $pending = $this->invitationLogRepository->findPendingInvitations();
+        $sentCount = 0;
+
+        foreach ($pending as $invitation) {
+            if ($this->sendInvitation($invitation)) {
+                $sentCount++;
             }
         }
 
-        // Fallback: try to extract from meta tags or data attributes
-        if (preg_match('/data-rating="([0-9.]+)"/i', $html, $matches)) {
-            return (float) $matches[1];
-        }
-
-        // Another fallback: look for rating in common patterns
-        if (preg_match('/"ratingValue"\s*:\s*"?([0-9.]+)"?/i', $html, $matches)) {
-            return (float) $matches[1];
-        }
-
-        return 0; // Default fallback - no score available
+        return $sentCount;
     }
 
-    /**
-     * Extract reviews count from Trustpilot HTML page.
-     *
-     * @param string $html The HTML content
-     * @return int The extracted reviews count or default value
-     */
-    private function extractReviewsCountFromHtml(string $html): int
+    // ──────────────────────────────────────────────
+    // Configuration Helpers
+    // ──────────────────────────────────────────────
+
+    public function getSettings(): array
     {
-        // Try to extract from JSON-LD structured data
-        if (preg_match('/<script[^>]*type="application\/ld\+json"[^>]*>(.*?)<\/script>/is', $html, $matches)) {
-            $jsonContent = $matches[1];
-            $data = json_decode($jsonContent, true);
-            
-            if (isset($data['aggregateRating']['reviewCount'])) {
-                return (int) $data['aggregateRating']['reviewCount'];
-            }
-        }
-
-        // Fallback: try common patterns
-        if (preg_match('/"reviewCount"\s*:\s*"?([0-9]+)"?/i', $html, $matches)) {
-            return (int) $matches[1];
-        }
-
-        // Look for total reviews text patterns
-        if (preg_match('/([0-9,]+)\s*(?:avis|reviews?|total)/i', $html, $matches)) {
-            return (int) str_replace(',', '', $matches[1]);
-        }
-
-        return 0; // Default fallback
+        return [
+            'enabled' => (bool) $this->getSetting('enabled', true),
+            'review_url' => $this->getSetting('review_url', ''),
+            'test_mode' => (bool) $this->getSetting('test_mode', false),
+            'api_key' => $this->getSetting('api_key', ''),
+            'business_unit_id' => $this->getSetting('business_unit_id', ''),
+            'business_domain' => $this->getSetting('business_domain', ''),
+            'afs_enabled' => (bool) $this->getSetting('afs_enabled', false),
+            'afs_send_mode' => $this->getSetting('afs_send_mode', 'immediate'),
+            'enable_widget' => (bool) $this->getSetting('enable_widget', true),
+            'display_mode' => $this->getSetting('display_mode', 'custom'),
+            'popup_title_en' => $this->getSetting('popup_title_en', 'Enjoying our service?'),
+            'popup_title_fr' => $this->getSetting('popup_title_fr', 'Vous appréciez notre service ?'),
+            'popup_message_en' => $this->getSetting('popup_message_en', 'If you\'ve enjoyed our service, we\'d love to hear your feedback on Trustpilot!'),
+            'popup_message_fr' => $this->getSetting('popup_message_fr', 'Si vous avez apprécié notre service, nous serions ravis d\'avoir votre avis sur Trustpilot !'),
+            'show_leave_review_button' => (bool) $this->getSetting('show_leave_review_button', true),
+            'trustbox_template_id' => $this->getSetting('trustbox_template_id', '53aa8912dec7e10d38f59f36'),
+            'trustbox_theme' => $this->getSetting('trustbox_theme', 'light'),
+            'trustbox_height' => $this->getSetting('trustbox_height', '140px'),
+            'trustbox_stars' => $this->getSetting('trustbox_stars', '4,5'),
+            'carousel_review_count' => (int) $this->getSetting('carousel_review_count', 5),
+            'carousel_min_stars' => (int) $this->getSetting('carousel_min_stars', 4),
+        ];
     }
 
-    /**
-     * Get default data when fetching fails or no reviews exist.
-     *
-     * @return array{score: float, reviews_count: int}
-     */
+    public function isAfsConfigured(): bool
+    {
+        return !empty($this->getSetting('api_key'))
+            && !empty($this->getSetting('api_secret'))
+            && ($this->resolveBusinessUnitId() !== null);
+    }
+
+    public function validateApiConfiguration(): array
+    {
+        $errors = [];
+
+        if (empty($this->getSetting('api_key'))) {
+            $errors[] = 'Trustpilot API key is not configured';
+        }
+
+        if (empty($this->getSetting('api_secret'))) {
+            $errors[] = 'Trustpilot API secret is not configured';
+        }
+
+        if (empty($this->getSetting('business_unit_id')) && empty($this->getSetting('business_domain'))) {
+            $errors[] = 'Neither Business Unit ID nor Business Domain is configured';
+        }
+
+        return $errors;
+    }
+
+    public function clearCache(): bool
+    {
+        try {
+            $buId = $this->resolveBusinessUnitId();
+            if ($buId) {
+                $this->cache->delete('trustpilot_data_' . md5($buId));
+                $this->cache->delete('trustpilot_reviews_' . md5($buId . '_' . $this->getSetting('carousel_review_count', 5) . '_' . implode(',', range((int) $this->getSetting('carousel_min_stars', 4), 5))));
+            }
+            $this->cache->delete(self::TOKEN_CACHE_KEY);
+            return true;
+        } catch (\Exception $e) {
+            $this->logger->error('Trustpilot: Failed to clear cache', [
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    private function getSetting(string $key, mixed $default = null): mixed
+    {
+        return $this->pluginSettingService->get(self::PLUGIN_ID, $key, $default);
+    }
+
     private function getDefaultData(): array
     {
         return [
             'score' => 0,
+            'stars' => 0,
             'reviews_count' => 0,
         ];
-    }
-
-    /**
-     * Get plugin settings.
-     *
-     * @return array Current plugin settings
-     */
-    public function getSettings(): array
-    {
-        return [
-            'enabled' => (bool) $this->pluginSettingService->get('trustpilot-review', 'enabled', true),
-            'review_url' => $this->pluginSettingService->get('trustpilot-review', 'review_url', ''),
-            'enable_widget' => (bool) $this->pluginSettingService->get('trustpilot-review', 'enable_widget', true),
-            'popup_title' => $this->pluginSettingService->get('trustpilot-review', 'popup_title', 'Vous appréciez notre service ?'),
-            'popup_message' => $this->pluginSettingService->get('trustpilot-review', 'popup_message', ''),
-        ];
-    }
-
-    /**
-     * Clear the cached Trustpilot data.
-     *
-     * @param string $reviewUrl The review URL to clear cache for
-     * @return bool True if cache was cleared
-     */
-    public function clearCache(string $reviewUrl): bool
-    {
-        $businessName = $this->extractBusinessName($reviewUrl);
-        if (empty($businessName)) {
-            return false;
-        }
-
-        try {
-            $cacheKey = 'trustpilot_data_' . md5($businessName);
-            $this->cache->delete($cacheKey);
-            return true;
-        } catch (\Exception $e) {
-            $this->logger->error('Trustpilot Review: Failed to clear cache', [
-                'error' => $e->getMessage(),
-            ]);
-            return false;
-        }
     }
 }
