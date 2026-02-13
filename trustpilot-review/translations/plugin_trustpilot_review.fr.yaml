@@ -1,27 +1,8 @@
-# Trustpilot Review Plugin - French translations
+# Trustpilot Review Plugin v2.1 - Traductions françaises
 plugin_trustpilot_review:
     name: "Avis Trustpilot"
-    description: "Affiche un widget Trustpilot avec la note et le nombre d'avis dynamiques"
-    
+    description: "Intégration du widget TrustBox Trustpilot pour PteroCA"
+
     widget:
-        title: "Vous appréciez notre service ?"
-        message: "Si vous avez apprécié notre service, nous serions ravis d'avoir votre avis sur Trustpilot !"
         leave_review: "Laisser un avis"
-        reviews: "avis"
-    
-    settings:
-        enabled: "Activer le plugin"
-        enabled_help: "Activer ou désactiver le plugin Trustpilot globalement"
-        review_url: "URL Trustpilot"
-        review_url_help: "L'URL de votre page Trustpilot (ex: https://www.trustpilot.com/review/example.com)"
-        enable_widget: "Activer le widget"
-        enable_widget_help: "Afficher le widget Trustpilot sur le tableau de bord"
-        popup_title: "Titre"
-        popup_title_help: "Titre affiché sur le widget"
-        popup_message: "Message"
-        popup_message_help: "Message affiché sur le widget"
-        test_mode: "Mode test"
-        test_mode_help: "Affiche un badge TEST MODE sur le widget. Désactivez en production !"
-    
-    messages:
-        settings_saved: "Paramètres enregistrés avec succès"
+        powered_by: "Propulsé par Trustpilot"

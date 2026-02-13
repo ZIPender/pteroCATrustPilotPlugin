@@ -1,58 +1,52 @@
-{#
- # Trustpilot Review Widget Template
- #
- # Displays a permanent card showing Trustpilot rating and prompting users to leave a review.
- #}
-<div class="card shadow-sm h-100 trustpilot-widget" id="trustpilot-review-widget">
-    <div class="card-header bg-success text-white">
-        <h5 class="card-title mb-0">
-            <i class="fas fa-star me-2"></i>
-            {{ popup_title }}
-            {% if test_mode %}
-            <span class="badge bg-warning text-dark ms-2" style="font-size: 0.6em;">TEST MODE</span>
-            {% endif %}
-        </h5>
-    </div>
-    <div class="card-body">
-        <div class="trustpilot-rating-container mb-3">
-            {% if trustpilot_reviews_count > 0 %}
-                <div class="trustpilot-stars" data-rating="{{ trustpilot_score }}">
-                    {% for i in 1..5 %}
-                        {% if i <= trustpilot_score|round %}
-                            <i class="fas fa-star trustpilot-star filled"></i>
-                        {% elseif i - 0.5 <= trustpilot_score %}
-                            <i class="fas fa-star-half-alt trustpilot-star filled"></i>
-                        {% else %}
-                            <i class="far fa-star trustpilot-star empty"></i>
-                        {% endif %}
-                    {% endfor %}
-                </div>
-                <div class="trustpilot-score-info">
-                    <span class="trustpilot-score-value">{{ trustpilot_score|number_format(1) }}</span>
-                    <span class="trustpilot-separator">/</span>
-                    <span class="trustpilot-score-max">5</span>
-                    <span class="trustpilot-reviews-count">
-                        ({{ trustpilot_reviews_count }} avis)
-                    </span>
+<div id="trustpilot-review-widget" class="trustpilot-plugin-wrapper">
+    {% if test_mode %}
+        <span class="badge bg-warning text-dark trustpilot-test-badge">TEST MODE</span>
+    {% endif %}
+
+    <div class="card shadow-sm h-100 trustpilot-card">
+        <div class="card-header trustpilot-card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-star me-2"></i>{{ popup_title }}
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if business_unit_id %}
+                <div class="trustpilot-trustbox-wrapper">
+                    <script type="text/javascript" src="//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js" async></script>
+                    <div class="trustpilot-widget"
+                         data-locale="{{ trustbox_locale|default('en-US') }}"
+                         data-template-id="{{ trustbox_template_id }}"
+                         data-businessunit-id="{{ business_unit_id }}"
+                         data-style-height="{{ trustbox_height }}"
+                         data-style-width="100%"
+                         data-theme="{{ trustbox_theme }}"
+                         data-stars="{{ trustbox_stars }}">
+                        <a href="https://www.trustpilot.com/review/{{ business_domain }}" target="_blank" rel="noopener noreferrer">Trustpilot</a>
+                    </div>
                 </div>
             {% else %}
-                <div class="trustpilot-stars">
-                    {% for i in 1..5 %}
-                        <i class="far fa-star trustpilot-star empty"></i>
-                    {% endfor %}
-                </div>
-                <div class="trustpilot-no-reviews">
-                    Aucun avis pour le moment
-                </div>
+                <p class="text-muted text-center mb-0">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    TrustBox widget requires a Business Unit ID. Check the plugin settings.
+                </p>
+            {% endif %}
+
+            {% if popup_message %}
+                <p class="card-text mt-3">{{ popup_message }}</p>
             {% endif %}
         </div>
-        <p class="card-text">{{ popup_message }}</p>
-    </div>
-    <div class="card-footer bg-light">
-        <div class="d-flex justify-content-center">
-            <a href="{{ review_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-success trustpilot-review-btn">
-                <i class="fas fa-external-link-alt me-2"></i>Laisser un avis
-            </a>
-        </div>
+
+        {% if show_leave_review_button %}
+            <div class="card-footer trustpilot-card-footer">
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="trustpilot-powered-by">
+                        <i class="fas fa-shield-alt me-1"></i>{{ label_powered_by }}
+                    </small>
+                    <a href="{{ review_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-sm trustpilot-review-btn">
+                        <i class="fas fa-external-link-alt me-1"></i>{{ label_leave_review }}
+                    </a>
+                </div>
+            </div>
+        {% endif %}
     </div>
 </div>

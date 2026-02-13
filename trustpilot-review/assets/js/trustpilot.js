@@ -1,37 +1,33 @@
-/**
- * Trustpilot Review Plugin JavaScript
- *
- * Handles widget initialization and dynamic rating display.
- */
-
-(function() {
+(function () {
     'use strict';
 
-    /**
-     * Initialize Trustpilot widget functionality
-     */
-    function initTrustpilotWidget() {
-        var widget = document.getElementById('trustpilot-review-widget');
-        if (!widget) return;
+    function initTrustBox() {
+        var wrapper = document.getElementById('trustpilot-review-widget');
+        if (!wrapper) return;
 
-        // Add hover animation to stars
-        var stars = widget.querySelectorAll('.trustpilot-star');
-        stars.forEach(function(star, index) {
-            star.style.animationDelay = (index * 0.1) + 's';
-        });
+        var trustboxDiv = wrapper.querySelector('.trustpilot-widget');
+        if (!trustboxDiv) return;
+
+        if (window.Trustpilot) {
+            window.Trustpilot.loadFromElement(trustboxDiv);
+            return;
+        }
+
+        var checkInterval = setInterval(function () {
+            if (window.Trustpilot) {
+                clearInterval(checkInterval);
+                window.Trustpilot.loadFromElement(trustboxDiv);
+            }
+        }, 200);
+
+        setTimeout(function () {
+            clearInterval(checkInterval);
+        }, 10000);
     }
 
-    /**
-     * Initialize when DOM is ready
-     */
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initTrustpilotWidget);
+        document.addEventListener('DOMContentLoaded', initTrustBox);
     } else {
-        initTrustpilotWidget();
+        initTrustBox();
     }
-
-    // Expose functions globally for external use
-    window.TrustpilotReview = {
-        init: initTrustpilotWidget
-    };
 })();
